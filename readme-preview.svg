@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" fill="none">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1200" y2="720" gradientUnits="userSpaceOnUse"><stop stop-color="#F8F7F4"/><stop offset="1" stop-color="#EFEEEB"/></linearGradient>
+    <linearGradient id="scene" x1="150" y1="260" x2="760" y2="565" gradientUnits="userSpaceOnUse"><stop stop-color="#48413A"/><stop offset=".48" stop-color="#A47A64"/><stop offset="1" stop-color="#252322"/></linearGradient>
+    <linearGradient id="sun" x1="530" y1="300" x2="730" y2="540" gradientUnits="userSpaceOnUse"><stop stop-color="#E5B796"/><stop offset="1" stop-color="#9B5A47"/></linearGradient>
+    <filter id="shadow" x="32" y="30" width="1136" height="664" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="12"/><feGaussianBlur stdDeviation="14"/><feComposite in2="hardAlpha" operator="out"/><feColorMatrix type="matrix" values="0 0 0 0 0.17 0 0 0 0 0.14 0 0 0 0 0.12 0 0 0 0.08 0"/><feBlend in2="BackgroundImageFix" result="effect1_dropShadow"/><feBlend in="SourceGraphic" in2="effect1_dropShadow" result="shape"/></filter>
+    <clipPath id="preview"><rect x="91" y="283" width="684" height="337" rx="8"/></clipPath>
+  </defs>
+  <rect width="1200" height="720" rx="22" fill="url(#paper)"/>
+  <g filter="url(#shadow)">
+    <rect x="60" y="49" width="1080" height="622" rx="16" fill="#fff"/>
+    <path d="M60 108.5h1080" stroke="#EAE7E2"/>
+    <rect x="84" y="68" width="27" height="22" rx="5" fill="#810707"/>
+    <text x="97.5" y="84" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="700" text-anchor="middle">YBK</text>
+    <text x="122" y="84" fill="#292624" font-family="Arial, sans-serif" font-size="15" font-weight="700">YBK Video Enhancer</text>
+    <text x="1037" y="83" fill="#8C8580" font-family="Arial, sans-serif" font-size="9" letter-spacing="1.4" text-anchor="end">BROWSER VIDEO STUDIO</text>
+    <text x="84" y="148" fill="#810707" font-family="Arial, sans-serif" font-size="10" font-weight="700" letter-spacing="2.4">YBK VIDEO ENHANCER</text>
+    <text x="84" y="190" fill="#282624" font-family="Arial, sans-serif" font-size="31" font-weight="700">영상 보정, <tspan fill="#810707">간단하게.</tspan></text>
+    <text x="84" y="218" fill="#79726D" font-family="Arial, sans-serif" font-size="12">영상 선택 → 설정 조정 → 원하는 형식으로 저장</text>
+    <rect x="84" y="245" width="716" height="396" rx="10" fill="#fff" stroke="#EBE8E3"/>
+    <text x="105" y="273" fill="#810707" font-family="Arial, sans-serif" font-size="9" font-weight="700" letter-spacing="1.2">01</text>
+    <text x="128" y="274" fill="#302D2A" font-family="Arial, sans-serif" font-size="12" font-weight="700">미리보기</text>
+    <circle cx="732" cy="270" r="3" fill="#39805B"/>
+    <text x="742" y="273" fill="#77716C" font-family="Arial, sans-serif" font-size="9">FFmpeg WASM · 기기 내 처리</text>
+    <g clip-path="url(#preview)">
+      <rect x="91" y="283" width="684" height="337" fill="url(#scene)"/>
+      <circle cx="603" cy="415" r="78" fill="url(#sun)" opacity=".93"/>
+      <path d="M91 495 227 386l110 99 105-127 145 157 87-88 101 93v100H91V495Z" fill="#3B3532" opacity=".85"/>
+      <path d="m91 547 133-88 118 90 124-73 131 78 103-72 75 44v94H91v-73Z" fill="#252322" opacity=".91"/>
+      <path d="M91 585c116-22 179-10 283-24 112-15 214-5 401-35v94H91v-35Z" fill="#171616" opacity=".67"/>
+      <rect x="105" y="295" width="92" height="24" rx="4" fill="#151413" fill-opacity=".66"/>
+      <text x="117" y="311" fill="#fff" font-family="Arial, sans-serif" font-size="9">보정 미리보기</text>
+      <rect x="673" y="295" width="87" height="24" rx="4" fill="#151413" fill-opacity=".66"/>
+      <text x="716.5" y="311" fill="#fff" font-family="Arial, sans-serif" font-size="9" text-anchor="middle">3840 × 2160</text>
+      <circle cx="431" cy="449" r="24" fill="#fff" fill-opacity=".88"/>
+      <path d="m427 438 12 11-12 11v-22Z" fill="#810707"/>
+    </g>
+    <rect x="84" y="651" width="716" height="1" fill="#F0EEEB"/>
+    <text x="102" y="670" fill="#7D7771" font-family="Arial, sans-serif" font-size="9">원본 비교 · 실시간 보정 미리보기</text>
+    <rect x="820" y="245" width="296" height="396" rx="10" fill="#fff" stroke="#EBE8E3"/>
+    <text x="842" y="273" fill="#810707" font-family="Arial, sans-serif" font-size="9" font-weight="700" letter-spacing="1.2">02</text>
+    <text x="865" y="274" fill="#302D2A" font-family="Arial, sans-serif" font-size="12" font-weight="700">보정 설정</text>
+    <path d="M820 291h296" stroke="#F0EEEB"/>
+    <text x="842" y="318" fill="#44403C" font-family="Arial, sans-serif" font-size="10" font-weight="700">출력 해상도</text>
+    <rect x="842" y="331" width="252" height="35" rx="5" fill="#F6F5F3" stroke="#EAE7E2"/>
+    <rect x="1009" y="335" width="81" height="27" rx="4" fill="#fff" stroke="#E5E1DC"/>
+    <text x="873" y="352" fill="#817A74" font-family="Arial, sans-serif" font-size="9" text-anchor="middle">원본</text>
+    <text x="966" y="352" fill="#817A74" font-family="Arial, sans-serif" font-size="9" text-anchor="middle">4K</text>
+    <text x="1049" y="352" fill="#810707" font-family="Arial, sans-serif" font-size="9" font-weight="700" text-anchor="middle">8K</text>
+    <text x="842" y="381" fill="#958E88" font-family="Arial, sans-serif" font-size="8">최종 해상도 7680 × 4320</text>
+    <text x="842" y="414" fill="#44403C" font-family="Arial, sans-serif" font-size="10" font-weight="700">선명도</text>
+    <text x="1094" y="414" fill="#810707" font-family="Arial, sans-serif" font-size="9" text-anchor="end">55</text>
+    <rect x="842" y="426" width="252" height="3" rx="2" fill="#E7E4E0"/>
+    <rect x="842" y="426" width="138" height="3" rx="2" fill="#810707"/>
+    <circle cx="980" cy="427.5" r="5" fill="#810707" stroke="#fff" stroke-width="2"/>
+    <text x="842" y="458" fill="#44403C" font-family="Arial, sans-serif" font-size="10" font-weight="700">채도</text>
+    <text x="1094" y="458" fill="#810707" font-family="Arial, sans-serif" font-size="9" text-anchor="end">118%</text>
+    <rect x="842" y="470" width="252" height="3" rx="2" fill="#E7E4E0"/>
+    <rect x="842" y="470" width="166" height="3" rx="2" fill="#810707"/>
+    <circle cx="1008" cy="471.5" r="5" fill="#810707" stroke="#fff" stroke-width="2"/>
+    <text x="842" y="502" fill="#44403C" font-family="Arial, sans-serif" font-size="10" font-weight="700">프레임 레이트</text>
+    <rect x="1000" y="484" width="94" height="31" rx="4" fill="#fff" stroke="#E9E6E2"/>
+    <text x="1012" y="504" fill="#48433F" font-family="Arial, sans-serif" font-size="9">60 fps</text>
+    <path d="m1080 497 4 4 4-4" stroke="#77716C" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="842" y="530" width="252" height="48" rx="5" fill="#FAF9F7" stroke="#EEEAE6"/>
+    <text x="854" y="548" fill="#89837D" font-family="Arial, sans-serif" font-size="8">예상 출력 · MP4</text>
+    <text x="854" y="566" fill="#282624" font-family="Arial, sans-serif" font-size="10" font-weight="700">8K UHD  ·  60 fps  ·  HEVC</text>
+    <rect x="842" y="591" width="252" height="34" rx="5" fill="#810707"/>
+    <text x="968" y="612" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="700" text-anchor="middle">영상 내보내기</text>
+  </g>
+</svg>
