@@ -17,6 +17,11 @@
     format: $("#formatSelect"),
     codec: $("#codecSelect"),
     bitrate: $("#bitrateSelect"),
+    trimStart: $("#trimStart"),
+    trimEnd: $("#trimEnd"),
+    customWidth: $("#customWidth"),
+    customHeight: $("#customHeight"),
+    keepAspect: $("#keepAspect"),
   };
 
   const vertexSource = `
@@ -125,6 +130,14 @@
     return `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
   }
 
+  function formatPreciseTime(seconds) {
+    const safeSeconds = Math.max(0, Number(seconds) || 0);
+    if (safeSeconds < 60) return safeSeconds.toFixed(2);
+    const minutes = Math.floor(safeSeconds / 60);
+    const remainder = (safeSeconds % 60).toFixed(2).padStart(5, "0");
+    return `${String(minutes).padStart(2, "0")}:${remainder}`;
+  }
+
   function formatBytes(bytes) {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
     if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
@@ -134,12 +147,74 @@
   function getOutputSize() {
     if (state.resolution === "original") return { width: video.videoWidth || 1920, height: video.videoHeight || 1080 };
     if (state.resolution === "4k") return { width: 3840, height: 2160 };
+    if (state.resolution === "custom") return { width: Number(controls.customWidth.value) || 1920, height: Number(controls.customHeight.value) || 1080 };
     return { width: 7680, height: 4320 };
+  }
+
+  function getTrimRange() {
+    if (!state.file || !Number.isFinite(video.duration) || video.duration <= 0) return { start: 0, end: 0 };
+    const duration = video.duration;
+    const minimumLength = Math.min(0.05, duration);
+    let start = Math.max(0, Math.min(Number(controls.trimStart.value) || 0, duration - minimumLength));
+    let end = Math.max(0, Math.min(Number(controls.trimEnd.value) || duration, duration));
+    if (end - start < minimumLength) {
+      if (document.activeElement === controls.trimStart) end = Math.min(duration, start + minimumLength);
+      else start = Math.max(0, end - minimumLength);
+    }
+    return { start, end };
+  }
+
+  function evenDimension(value, min, max) {
+    const rounded = Math.round(Number(value) / 2) * 2;
+    return Math.max(min, Math.min(max, Number.isFinite(rounded) ? rounded : min));
+  }
+
+  function updateCustomDimensions(changedInput) {
+    const ratio = (video.videoWidth && video.videoHeight) ? video.videoWidth / video.videoHeight : 16 / 9;
+    if (changedInput === controls.customWidth && controls.customWidth.value !== "") {
+      const width = evenDimension(controls.customWidth.value, 160, 7680);
+      controls.customWidth.value = String(width);
+      if (controls.keepAspect.checked) controls.customHeight.value = String(evenDimension(width / ratio, 90, 4320));
+    } else if (changedInput === controls.customHeight && controls.customHeight.value !== "") {
+      const height = evenDimension(controls.customHeight.value, 90, 4320);
+      controls.customHeight.value = String(height);
+      if (controls.keepAspect.checked) controls.customWidth.value = String(evenDimension(height * ratio, 160, 7680));
+    } else {
+      controls.customWidth.value = String(evenDimension(controls.customWidth.value, 160, 7680));
+      controls.customHeight.value = String(evenDimension(controls.customHeight.value, 90, 4320));
+    }
+  }
+
+  function syncTrimControls(changedInput) {
+    if (!state.file || !Number.isFinite(video.duration)) return;
+    const minimumLength = Math.min(0.05, video.duration);
+    controls.trimStart.min = "0";
+    controls.trimStart.max = String(Math.max(0, video.duration - minimumLength));
+    controls.trimEnd.min = String(minimumLength);
+    controls.trimEnd.max = String(video.duration);
+    const trim = getTrimRange();
+    controls.trimStart.value = trim.start.toFixed(2);
+    controls.trimEnd.value = trim.end.toFixed(2);
+    const clipDuration = trim.end - trim.start;
+    $("#trimSummary").textContent = clipDuration >= video.duration - 0.05
+      ? `전체 영상 · ${clipDuration.toFixed(1)}초`
+      : `선택 구간 · ${clipDuration.toFixed(2)}초`;
+    const currentPosition = Math.min(trim.end, Math.max(trim.start, video.currentTime));
+    if (Math.abs(currentPosition - video.currentTime) > 0.01) {
+      video.pause();
+      video.currentTime = currentPosition;
+    }
+    if (!$("#seekBar").matches(":active")) {
+      $("#seekBar").value = String(Math.round(((currentPosition - trim.start) / Math.max(0.001, clipDuration)) * 1000));
+    }
+    const elapsed = Math.max(0, currentPosition - trim.start);
+    $("#timecode").innerHTML = `${formatPreciseTime(elapsed)} <i>/</i> ${formatPreciseTime(clipDuration)}s`;
+    void changedInput;
   }
 
   function updateOutputSummary() {
     const dimensions = getOutputSize();
-    const resolution = state.resolution === "original" ? "원본" : `${state.resolution.toUpperCase()} UHD`;
+    const resolution = state.resolution === "original" ? "원본" : state.resolution === "custom" ? `직접 입력 · ${dimensions.width} × ${dimensions.height}` : `${state.resolution.toUpperCase()} UHD`;
     const fps = controls.fps.value === "source" ? "원본 fps" : `${controls.fps.value} fps`;
     $("#outputSummary").innerHTML = `${resolution} <i>·</i> ${fps}`;
     $("#outputFormatBadge").textContent = controls.format.value.toUpperCase();
@@ -148,6 +223,7 @@
     $("#outputDetails").textContent = `${codecLabel} · ${bitrateLabel} · WASM`;
     $("#resolutionNote").textContent = `최종 해상도 ${dimensions.width} × ${dimensions.height}`;
     $("#overlayResolution").textContent = `${dimensions.width} × ${dimensions.height}`;
+    $("#customSizeGroup").hidden = state.resolution !== "custom";
     const longVideo = Number.isFinite(video.duration) && video.duration > 600;
     $("#exportFootnote").textContent = dimensions.width >= 7680 || longVideo
       ? "고해상도·긴 영상은 처리 시간이 길 수 있습니다."
@@ -168,11 +244,24 @@
     updateSlider(controls.contrast, $("#contrastValue"), (value) => `${value}%`, true);
     updateSlider(controls.brightness, $("#brightnessValue"), (value) => `${value > 0 ? "+" : ""}${value}`, true);
     updateOutputSummary();
+    syncTrimControls();
     if (state.file && video.readyState >= 2) drawFrame();
   }
 
   function refreshExportAvailability() {
-    $("#exportButton").disabled = !state.file || state.exporting;
+    $("#exportButton").disabled = !state.file || video.readyState < 1 || !Number.isFinite(video.duration) || state.exporting;
+  }
+
+  function setProcessingControlsDisabled(disabled) {
+    [controls.sharpness, controls.saturation, controls.contrast, controls.brightness, controls.fps, controls.preset, controls.format, controls.codec, controls.bitrate, controls.customWidth, controls.customHeight, controls.keepAspect].forEach((control) => {
+      control.disabled = disabled;
+    });
+    document.querySelectorAll("[data-resolution]").forEach((button) => { button.disabled = disabled; });
+    $("#resetButton").disabled = disabled;
+    const trimUnavailable = !state.file || video.readyState < 1 || !Number.isFinite(video.duration);
+    controls.trimStart.disabled = disabled || trimUnavailable;
+    controls.trimEnd.disabled = disabled || trimUnavailable;
+    $("#trimReset").disabled = disabled || trimUnavailable;
   }
 
   function setCanvasSize(forceOutput = false) {
@@ -244,6 +333,10 @@
     $("#playButton").disabled = true;
     $("#muteButton").disabled = true;
     $("#seekBar").disabled = true;
+    controls.trimStart.disabled = true;
+    controls.trimEnd.disabled = true;
+    $("#trimReset").disabled = true;
+    $("#trimSummary").textContent = "영상 불러오는 중";
     refreshExportAvailability();
     $("#compareButton").disabled = true;
     dropZone.classList.remove("has-video");
@@ -258,6 +351,11 @@
     $("#playButton").disabled = false;
     $("#muteButton").disabled = false;
     $("#seekBar").disabled = false;
+    controls.trimStart.disabled = false;
+    controls.trimEnd.disabled = false;
+    $("#trimReset").disabled = false;
+    controls.trimStart.value = "0";
+    controls.trimEnd.value = video.duration.toFixed(2);
     refreshExportAvailability();
     $("#compareButton").disabled = false;
     emptyState.querySelector("h3").textContent = "영상으로 시작해 보세요";
@@ -266,6 +364,7 @@
     dropZone.classList.add("has-video");
     $("#stageOverlay").hidden = false;
     $("#seekBar").value = "0";
+    syncTrimControls();
     updateOutputSummary();
     drawFrame();
   });
@@ -280,8 +379,16 @@
   });
 
   video.addEventListener("timeupdate", () => {
-    $("#timecode").innerHTML = `${formatTime(video.currentTime)} <i>/</i> ${formatTime(video.duration)}`;
-    if (!$("#seekBar").matches(":active") && video.duration) $("#seekBar").value = String(Math.round((video.currentTime / video.duration) * 1000));
+    if (!video.duration) return;
+    const trim = getTrimRange();
+    if (!video.paused && video.currentTime >= trim.end) {
+      video.pause();
+      video.currentTime = trim.end;
+    }
+    const clipDuration = Math.max(0.001, trim.end - trim.start);
+    const elapsed = Math.max(0, Math.min(clipDuration, video.currentTime - trim.start));
+    $("#timecode").innerHTML = `${formatPreciseTime(elapsed)} <i>/</i> ${formatPreciseTime(clipDuration)}s`;
+    if (!$("#seekBar").matches(":active")) $("#seekBar").value = String(Math.round((elapsed / clipDuration) * 1000));
   });
   video.addEventListener("play", () => { $("#playIcon").textContent = "Ⅱ"; $("#playButton").setAttribute("aria-label", "일시 정지"); });
   video.addEventListener("pause", () => { $("#playIcon").textContent = "▶"; $("#playButton").setAttribute("aria-label", "재생"); });
@@ -293,7 +400,11 @@
     event.target.value = "";
   });
   $("#playButton").addEventListener("click", () => {
-    if (video.paused) video.play().catch(() => notify("이 영상은 재생할 수 없습니다."));
+    if (video.paused) {
+      const trim = getTrimRange();
+      if (video.currentTime < trim.start || video.currentTime >= trim.end) video.currentTime = trim.start;
+      video.play().catch(() => notify("이 영상은 재생할 수 없습니다."));
+    }
     else video.pause();
   });
   $("#muteButton").addEventListener("click", () => {
@@ -302,7 +413,18 @@
     $("#muteButton").setAttribute("aria-label", video.muted ? "음소거 해제" : "음소거");
   });
   $("#seekBar").addEventListener("input", (event) => {
-    if (video.duration) video.currentTime = (Number(event.target.value) / 1000) * video.duration;
+    if (video.duration) {
+      const trim = getTrimRange();
+      video.currentTime = trim.start + (Number(event.target.value) / 1000) * (trim.end - trim.start);
+    }
+  });
+  controls.trimStart.addEventListener("change", () => syncTrimControls(controls.trimStart));
+  controls.trimEnd.addEventListener("change", () => syncTrimControls(controls.trimEnd));
+  $("#trimReset").addEventListener("click", () => {
+    if (!Number.isFinite(video.duration)) return;
+    controls.trimStart.value = "0";
+    controls.trimEnd.value = video.duration.toFixed(2);
+    syncTrimControls();
   });
   $("#compareButton").addEventListener("click", (event) => {
     state.original = !state.original;
@@ -321,8 +443,21 @@
   $("#resolutionOptions").addEventListener("click", (event) => {
     const button = event.target.closest("[data-resolution]");
     if (!button) return;
+    if (button.dataset.resolution === "custom" && state.resolution !== "custom") {
+      controls.customWidth.value = String(evenDimension(video.videoWidth || 1920, 160, 7680));
+      controls.customHeight.value = String(evenDimension(video.videoHeight || 1080, 90, 4320));
+    }
     state.resolution = button.dataset.resolution;
     document.querySelectorAll("[data-resolution]").forEach((item) => item.classList.toggle("selected", item === button));
+    syncControls();
+  });
+  [controls.customWidth, controls.customHeight].forEach((input) => input.addEventListener("change", () => {
+    if (state.resolution !== "custom") return;
+    updateCustomDimensions(input);
+    syncControls();
+  }));
+  controls.keepAspect.addEventListener("change", () => {
+    if (controls.keepAspect.checked && state.resolution === "custom") updateCustomDimensions(controls.customWidth);
     syncControls();
   });
   $("#resetButton").addEventListener("click", () => {
@@ -383,7 +518,9 @@
       if (line && state.exporting) {
         const frames = Number(line[1]);
         if (frames > 0 && Number.isFinite(video.duration)) {
-          const percent = Math.min(94, (frames / Math.max(1, video.duration * 60)) * 94);
+          const fps = controls.fps.value === "source" ? 30 : Number(controls.fps.value);
+          const clipDuration = Math.max(0.05, getTrimRange().end - getTrimRange().start);
+          const percent = Math.min(94, (frames / Math.max(1, clipDuration * fps)) * 94);
           setExportProgress(percent, "FFmpeg WASM 영상 처리 중");
         }
       }
@@ -437,7 +574,12 @@
     }
     const { width, height } = getOutputSize();
     if ((width !== video.videoWidth || height !== video.videoHeight) && state.resolution !== "original") {
-      filters.push(`scale=${width}:${height}:flags=lanczos+accurate_rnd`);
+      if (state.resolution === "custom" && controls.keepAspect.checked) {
+        filters.push(`scale=${width}:${height}:force_original_aspect_ratio=decrease:flags=lanczos+accurate_rnd`);
+        filters.push(`pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=black`);
+      } else {
+        filters.push(`scale=${width}:${height}:flags=lanczos+accurate_rnd`);
+      }
     }
     if (controls.sharpness.value !== "0" && capabilities.cas) filters.push(`cas=${(Number(controls.sharpness.value) / 100).toFixed(2)}`);
     filters.push(`eq=contrast=${(Number(controls.contrast.value) / 100).toFixed(2)}:brightness=${(Number(controls.brightness.value) / 100).toFixed(2)}:saturation=${(Number(controls.saturation.value) / 100).toFixed(2)}`);
@@ -445,7 +587,8 @@
   }
 
   async function executeTranscode(ffmpeg, inputName, outputName, encoder, filters, useAac) {
-    const args = ["-y", "-hide_banner", "-i", inputName, "-map", "0:v:0", "-map", "0:a?", "-vf", filters, "-c:v", encoder];
+    const trim = getTrimRange();
+    const args = ["-y", "-hide_banner", "-i", inputName, "-ss", trim.start.toFixed(3), "-t", (trim.end - trim.start).toFixed(3), "-map", "0:v:0", "-map", "0:a?", "-vf", filters, "-c:v", encoder];
     if (controls.bitrate.value) {
       const bitrate = controls.bitrate.value;
       const rate = Number.parseInt(bitrate, 10);
@@ -469,12 +612,27 @@
       notify("정적 브라우저 엔진은 최대 2 GB까지 지원합니다. 더 작은 영상으로 시도해 주세요.", 5000);
       return;
     }
+    const selectedTrim = getTrimRange();
+    if (!Number.isFinite(selectedTrim.start) || !Number.isFinite(selectedTrim.end) || selectedTrim.end - selectedTrim.start < 0.05) {
+      notify("자르기 구간은 0.05초 이상이어야 합니다.");
+      return;
+    }
+    const requestedSize = getOutputSize();
+    if (!Number.isInteger(requestedSize.width) || !Number.isInteger(requestedSize.height) || requestedSize.width % 2 !== 0 || requestedSize.height % 2 !== 0) {
+      notify("출력 너비와 높이는 짝수 픽셀로 설정해 주세요.");
+      return;
+    }
+    if (requestedSize.width < 2 || requestedSize.height < 2 || requestedSize.width > 7680 || requestedSize.height > 4320) {
+      notify("출력 크기는 너비 2–7680px, 높이 2–4320px 범위로 설정해 주세요.");
+      return;
+    }
     state.exporting = true;
     state.stopped = false;
     $("#exportButton").hidden = true;
     $("#progressWrap").hidden = false;
     $("#playButton").disabled = true;
     $("#seekBar").disabled = true;
+    setProcessingControlsDisabled(true);
     refreshExportAvailability();
     let inputName = "";
     let outputName = "";
@@ -491,7 +649,8 @@
 
       const extension = state.file.name.includes(".") ? state.file.name.split(".").pop().toLowerCase().replace(/[^a-z0-9]/g, "") : "mp4";
       inputName = `source_${Date.now()}.${extension || "mp4"}`;
-      outputName = `YBK_Video_Enhancer_${state.resolution}.${controls.format.value}`;
+      const sizeSuffix = state.resolution === "custom" ? `_${requestedSize.width}x${requestedSize.height}` : "";
+      outputName = `YBK_Video_Enhancer_${state.resolution}${sizeSuffix}.${controls.format.value}`;
       setExportProgress(1, "브라우저에서 영상 읽는 중");
       const data = new Uint8Array(await state.file.arrayBuffer());
       await ffmpeg.writeFile(inputName, data);
@@ -517,7 +676,11 @@
       const baseName = (state.file.name.replace(/\.[^.]+$/, "") || "video").replace(/[\\/:*?"<>|]/g, "-");
       const link = document.createElement("a");
       link.href = objectUrl;
-      link.download = `${baseName}_YBK_Video_Enhancer_${state.resolution}.${controls.format.value}`;
+      const trimSuffix = selectedTrim.start > 0 || selectedTrim.end < video.duration - 0.05
+        ? `_trim_${selectedTrim.start.toFixed(1)}-${selectedTrim.end.toFixed(1)}s`
+        : "";
+      const downloadSizeSuffix = state.resolution === "custom" ? `_${requestedSize.width}x${requestedSize.height}` : "";
+      link.download = `${baseName}_YBK_Video_Enhancer_${state.resolution}${downloadSizeSuffix}${trimSuffix}.${controls.format.value}`;
       document.body.append(link);
       link.click();
       link.remove();
@@ -545,6 +708,7 @@
         $("#exportButton").hidden = false;
         $("#playButton").disabled = false;
         $("#seekBar").disabled = false;
+        setProcessingControlsDisabled(false);
         refreshExportAvailability();
       }
     }
@@ -564,6 +728,7 @@
     $("#exportButton").hidden = false;
     $("#playButton").disabled = false;
     $("#seekBar").disabled = false;
+    setProcessingControlsDisabled(false);
     refreshExportAvailability();
     notify("영상 처리를 취소하고 메모리를 정리했습니다.");
   });

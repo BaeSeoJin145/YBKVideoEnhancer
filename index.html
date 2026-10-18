@@ -71,6 +71,18 @@
               <button class="icon-button sound-button" id="muteButton" type="button" aria-label="음소거" disabled>◖))</button>
             </div>
           </div>
+          <div class="trim-panel" aria-label="영상 자르기">
+            <div class="trim-heading">
+              <div><span class="trim-icon" aria-hidden="true">⌞</span><strong>영상 자르기</strong><span class="trim-description">내보낼 구간</span></div>
+              <output id="trimSummary">전체 영상</output>
+            </div>
+            <div class="trim-fields">
+              <label class="trim-field"><span>시작</span><span class="trim-input-wrap"><input id="trimStart" type="number" min="0" max="0" step="0.1" value="0" disabled aria-label="시작 시간(초)" /><small>초</small></span></label>
+              <span class="trim-separator" aria-hidden="true">—</span>
+              <label class="trim-field"><span>끝</span><span class="trim-input-wrap"><input id="trimEnd" type="number" min="0" max="0" step="0.1" value="0" disabled aria-label="끝 시간(초)" /><small>초</small></span></label>
+              <button class="trim-reset" id="trimReset" type="button" disabled>전체 영상</button>
+            </div>
+          </div>
           <div class="preview-caption"><span>실시간 미리보기</span><span>변경 사항은 내보내기에 적용됩니다</span></div>
         </section>
 
@@ -86,8 +98,20 @@
                 <button type="button" data-resolution="original">원본</button>
                 <button type="button" data-resolution="4k">4K</button>
                 <button class="selected" type="button" data-resolution="8k">8K</button>
+                <button type="button" data-resolution="custom">직접 입력</button>
               </div>
               <p class="field-note" id="resolutionNote">최종 해상도 7680 × 4320</p>
+            </div>
+
+            <div class="custom-size-group" id="customSizeGroup" hidden>
+              <div class="custom-size-fields">
+                <label class="custom-size-field" for="customWidth">너비 <span>W</span><input id="customWidth" type="number" min="160" max="7680" step="2" value="1920" /></label>
+                <span class="size-times" aria-hidden="true">×</span>
+                <label class="custom-size-field" for="customHeight">높이 <span>H</span><input id="customHeight" type="number" min="90" max="4320" step="2" value="1080" /></label>
+                <span class="size-pixel-label">px</span>
+              </div>
+              <label class="aspect-lock"><input id="keepAspect" type="checkbox" checked /><span class="aspect-lock-icon" aria-hidden="true">↔</span><span>원본 비율 유지</span></label>
+              <p class="field-note custom-size-note">너비와 높이는 짝수 픽셀로 적용됩니다.</p>
             </div>
 
             <div class="setting-group slider-group">
