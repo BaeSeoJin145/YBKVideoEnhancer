@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f4f1" />
+    <meta name="description" content="YBK Video Enhancer로 영상을 간편하게 보정하세요. 모션 보간, Lanczos 업스케일, CAS 선명도 보정과 MP4·MOV·MKV 내보내기를 브라우저에서 처리합니다." />
+    <title>YBK Video Enhancer</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="YBK Video Enhancer" />
+    <meta property="og:title" content="YBK Video Enhancer | 영상 보정, 간단하게" />
+    <meta property="og:description" content="영상 선택부터 보정·저장까지 간편하게. 모션 보간, 4K·8K 업스케일, MP4·MOV·MKV 내보내기를 지원합니다." />
+    <meta property="og:image" content="/YBK%20Studio%20full%20logo.png" />
+    <meta property="og:image:alt" content="YBK Video Enhancer — YBK Studio 로고" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="YBK Video Enhancer | 영상 보정, 간단하게" />
+    <meta name="twitter:description" content="영상 선택부터 보정·저장까지 간편하게. 모션 보간과 MP4·MOV·MKV 내보내기 지원." />
+    <meta name="twitter:image" content="/YBK%20Studio%20full%20logo.png" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="apple-touch-icon" href="YBK%20Studio%20full%20logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="YBK Video Enhancer">
+        <span class="brand-logo-shell"><img class="brand-logo" src="YBK%20Studio%20full%20logo.png" alt="" /></span>
+        <span>YBK Video Enhancer</span>
+      </a>
+    </header>
+
+    <main class="shell">
+      <section class="intro">
+        <div>
+          <h1>영상 보정,<br /><span>간단하게.</span></h1>
+        </div>
+      </section>
+
+      <div class="workspace">
+        <section class="preview-panel panel" aria-label="영상 미리보기">
+          <div class="panel-heading preview-heading">
+            <div><span class="section-index">01</span><h2>미리보기</h2></div>
+            <div class="preview-tools">
+              <span class="live-indicator" id="engineStatus"><i id="engineStatusDot"></i><span id="engineStatusText">브라우저 엔진 · 첫 사용 시 로드</span></span>
+              <button class="compare-button" id="compareButton" type="button" disabled aria-pressed="false">원본 보기</button>
+            </div>
+          </div>
+          <div class="preview-stage" id="dropZone">
+            <canvas id="previewCanvas" aria-label="보정 영상 미리보기"></canvas>
+            <div class="empty-state" id="emptyState">
+              <div class="upload-visual" aria-hidden="true"><span class="upload-arrow">↑</span><span class="upload-frame"></span></div>
+              <h3>영상으로 시작해 보세요</h3>
+              <p>파일을 여기에 끌어다 놓거나<br />아래 버튼으로 선택하세요.</p>
+              <button class="primary-button upload-button" id="chooseButton" type="button">영상 선택 <span aria-hidden="true">↗</span></button>
+              <span class="format-note">MP4, MOV, MKV 등 · 최대 약 2 GB</span>
+            </div>
+            <div class="stage-overlay" id="stageOverlay" hidden>
+              <span class="overlay-label" id="overlayLabel">보정 미리보기</span>
+              <span class="overlay-resolution" id="overlayResolution">—</span>
+            </div>
+            <video id="sourceVideo" playsinline preload="metadata"></video>
+          </div>
+          <div class="media-bar">
+            <div class="media-file"><span class="file-mark" aria-hidden="true">▶</span><div><strong id="fileName">선택된 영상 없음</strong><span id="fileMeta">영상을 추가하면 정보가 표시됩니다</span></div></div>
+            <div class="playback-controls">
+              <button class="icon-button" id="playButton" type="button" aria-label="재생" disabled><span id="playIcon">▶</span></button>
+              <span class="timecode" id="timecode">00:00 <i>/</i> 00:00</span>
+              <input id="seekBar" class="seek-bar" type="range" min="0" max="1000" value="0" aria-label="재생 위치" disabled />
+              <button class="icon-button sound-button" id="muteButton" type="button" aria-label="음소거" disabled>◖))</button>
+            </div>
+          </div>
+          <div class="preview-caption"><span>실시간 미리보기</span><span>변경 사항은 내보내기에 적용됩니다</span></div>
+        </section>
+
+        <aside class="settings-panel panel" aria-label="보정 설정">
+          <div class="panel-heading settings-heading">
+            <div><span class="section-index">02</span><h2>보정 설정</h2></div>
+            <button class="reset-button" id="resetButton" type="button">초기화</button>
+          </div>
+          <div class="settings-content">
+            <div class="setting-group">
+              <div class="group-title"><span>출력 해상도</span><span class="hint">OUTPUT</span></div>
+              <div class="segmented-control" id="resolutionOptions" role="group" aria-label="출력 해상도">
+                <button type="button" data-resolution="original">원본</button>
+                <button type="button" data-resolution="4k">4K</button>
+                <button class="selected" type="button" data-resolution="8k">8K</button>
+              </div>
+              <p class="field-note" id="resolutionNote">최종 해상도 7680 × 4320</p>
+            </div>
+
+            <div class="setting-group slider-group">
+              <div class="group-title"><label for="sharpness">선명도</label><output id="sharpnessValue" for="sharpness">55</output></div>
+              <input class="styled-range" id="sharpness" type="range" min="0" max="100" value="55" />
+              <div class="range-scale"><span>부드럽게</span><span>또렷하게</span></div>
+            </div>
+
+            <div class="setting-group slider-group">
+              <div class="group-title"><label for="saturation">채도</label><output id="saturationValue" for="saturation">118%</output></div>
+              <input class="styled-range" id="saturation" type="range" min="50" max="160" value="118" />
+              <div class="range-scale"><span>차분하게</span><span>생생하게</span></div>
+            </div>
+
+            <div class="setting-group slider-group">
+              <div class="group-title"><label for="contrast">대비</label><output id="contrastValue" for="contrast">106%</output></div>
+              <input class="styled-range" id="contrast" type="range" min="80" max="130" value="106" />
+              <div class="range-scale"><span>낮게</span><span>높게</span></div>
+            </div>
+
+            <div class="setting-group slider-group brightness-group">
+              <div class="group-title"><label for="brightness">밝기</label><output id="brightnessValue" for="brightness">+1</output></div>
+              <input class="styled-range" id="brightness" type="range" min="-20" max="20" value="1" />
+              <div class="range-scale"><span>어둡게</span><span>밝게</span></div>
+            </div>
+
+            <div class="setting-group export-group">
+              <div class="export-heading"><div class="group-title"><label for="fpsSelect">프레임 레이트</label><span class="hint">FPS</span></div><span class="export-description">내보내기 프레임 속도</span></div>
+              <div class="select-wrap"><select id="fpsSelect" aria-label="프레임 레이트"><option value="source">원본 유지</option><option value="24">24 fps</option><option value="30">30 fps</option><option value="60" selected>60 fps</option><option value="120">120 fps</option></select><span aria-hidden="true">⌄</span></div>
+            </div>
+
+            <div class="setting-group export-group extra-export-group">
+              <div class="export-heading"><div class="group-title"><label for="presetSelect">보간 품질</label><span class="hint">FLOW</span></div><span class="export-description">모션 보간 정밀도</span></div>
+              <div class="select-wrap"><select id="presetSelect" aria-label="보간 품질"><option value="fast">빠르게</option><option value="medium" selected>균형</option><option value="ultra">정밀</option></select><span aria-hidden="true">⌄</span></div>
+            </div>
+
+            <div class="setting-group export-group extra-export-group">
+              <div class="export-heading"><div class="group-title"><label for="formatSelect">파일 형식</label><span class="hint">CONTAINER</span></div><span class="export-description">영상 파일 포맷</span></div>
+              <div class="select-wrap"><select id="formatSelect" aria-label="파일 형식"><option value="mp4" selected>MP4</option><option value="mov">MOV</option><option value="mkv">MKV</option></select><span aria-hidden="true">⌄</span></div>
+            </div>
+
+            <div class="setting-group export-group extra-export-group">
+              <div class="export-heading"><div class="group-title"><label for="codecSelect">비디오 코덱</label><span class="hint">CODEC</span></div><span class="export-description">기본값 자동 선택</span></div>
+              <div class="select-wrap"><select id="codecSelect" aria-label="비디오 코덱"><option value="auto" selected>자동</option><option value="hevc">H.265 / HEVC</option><option value="h264">H.264</option></select><span aria-hidden="true">⌄</span></div>
+            </div>
+
+            <div class="setting-group export-group extra-export-group">
+              <div class="export-heading"><div class="group-title"><label for="bitrateSelect">비트레이트</label><span class="hint">BITRATE</span></div><span class="export-description">화질과 파일 크기</span></div>
+              <div class="select-wrap"><select id="bitrateSelect" aria-label="비트레이트"><option value="" selected>자동</option><option value="20M">20 Mbps</option><option value="40M">40 Mbps</option><option value="45M">45 Mbps</option><option value="60M">60 Mbps</option><option value="80M">80 Mbps</option><option value="120M">120 Mbps</option></select><span aria-hidden="true">⌄</span></div>
+            </div>
+
+            <div class="output-card">
+              <div class="output-card-top"><span>예상 출력</span><span class="output-tag" id="outputFormatBadge">MP4</span></div>
+              <strong id="outputSummary">8K UHD <i>·</i> 60 fps</strong>
+              <span class="output-subtitle" id="outputDetails">HEVC · 비트레이트 자동</span>
+            </div>
+            <button class="primary-button export-button" id="exportButton" type="button" disabled><span id="exportButtonText">영상 내보내기</span><span aria-hidden="true">↗</span></button>
+            <div class="progress-wrap" id="progressWrap" hidden><div class="progress-meta"><span id="progressLabel">내보내는 중</span><span id="progressPercent">0%</span></div><div class="progress-track"><span id="progressFill"></span></div><button id="cancelExport" class="cancel-button" type="button">내보내기 취소</button></div>
+            <p class="export-footnote" id="exportFootnote">고해상도 출력은 기기 성능과 메모리에 따라 시간이 오래 걸릴 수 있습니다.</p>
+          </div>
+        </aside>
+      </div>
+
+      <footer><span>YBK Video Enhancer</span></footer>
+    </main>
+
+    <input id="fileInput" type="file" accept="video/*,.mp4,.mov,.m4v,.mkv,.avi,.webm,.mpeg,.mpg,.mts,.m2ts,.ts,.3gp,.wmv,.flv" hidden />
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
